@@ -1,0 +1,13 @@
+{
+  "name": "com.khutchins.combatantelope",
+  "displayName": "Combatantelope",
+  "author": {
+    "name": "Kevin Hutchins",
+    "url": "https://github.com/khutchins"
+  },
+  "version": "1.0.0",
+  "unity": "2019.3",
+  "description": "A few different turn-based combat systems.",
+  "type": "library",
+  "hideInEditor": false
+}
