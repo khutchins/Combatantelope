@@ -10,7 +10,7 @@ namespace Combatantelope.Kerfuffle {
         public static int TURN_DELAY = 100;
         public override bool CanDoTurn => EntityState.HP > 0;
 
-        public override int TimeToNextTurn => EntityState.TurnDelay;
+        public override float TimeToNextTurn => EntityState.TurnDelay;
 
         public override string Name => EntityState.Attributes.Name;
 

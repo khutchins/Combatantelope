@@ -11,7 +11,7 @@ namespace Combatantelope {
 
         public abstract bool CanDoTurn { get; }
 
-        public abstract int TimeToNextTurn { get; }
+        public abstract float TimeToNextTurn { get; }
 
         public abstract string Name { get; }
 

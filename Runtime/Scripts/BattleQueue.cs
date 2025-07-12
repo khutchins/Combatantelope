@@ -8,7 +8,7 @@ namespace Combatantelope {
     public interface IBattleEntity {
         string Name { get; }
         bool CanDoTurn { get; }
-        int TimeToNextTurn { get; }
+        float TimeToNextTurn { get; }
     }
 
     public enum QueuePriority {
@@ -40,10 +40,10 @@ namespace Combatantelope {
 
         T LowestEntity() {
             T lowestE = default;
-            int lowest = int.MaxValue;
+            float lowest = int.MaxValue;
             foreach (T entity in _entities) {
                 if (!entity.CanDoTurn) continue;
-                int next = entity.TimeToNextTurn;
+                float next = entity.TimeToNextTurn;
                 if (next < lowest) {
                     lowest = next;
                     lowestE = entity;
@@ -54,10 +54,10 @@ namespace Combatantelope {
 
         T HighestEntity() {
             T highestE = default;
-            int highest = int.MinValue;
+            float highest = int.MinValue;
             foreach (T entity in _entities) {
                 if (!entity.CanDoTurn) continue;
-                int next = entity.TimeToNextTurn;
+                float next = entity.TimeToNextTurn;
                 if (next > highest) {
                     highest = next;
                     highestE = entity;

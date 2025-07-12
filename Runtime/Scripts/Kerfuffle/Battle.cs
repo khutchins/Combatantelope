@@ -65,7 +65,7 @@ namespace Combatantelope.Kerfuffle {
 
             var ticks = _currentEntity.TimeToNextTurn;
             foreach (Entity ent in _entities) {
-                ent.TimePassed(ticks);
+                ent.TimePassed((int)ticks);
             }
 
             _battleState = State.WaitingForMove;
