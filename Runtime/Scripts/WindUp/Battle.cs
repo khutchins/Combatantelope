@@ -9,118 +9,6 @@ namespace Combatantelope.WindUp {
         private Entity _currentEntity;
         private BattleQueue<Entity> _queue;
 
-        public class BEvent : BaseEvent {
-
-            public BEvent(Entity.State[] snapshots) : base(snapshots) {}
-        }
-
-        public class BEventStart : BEvent {
-            public BEventStart(Entity.State[] snapshots) : base(snapshots) {
-            }
-        }
-
-        public class BEventAwaitingMove : BEvent {
-            public readonly Entity.State AwaitingPlayer;
-
-            public BEventAwaitingMove(Entity.State[] snapshots, Entity player) : base(snapshots) {
-                AwaitingPlayer = player.EntityState;
-            }
-        }
-
-        public class BEventBattleEnded : BEvent {
-            public readonly Entity.State Winner;
-            public readonly Entity.State Loser;
-
-            public BEventBattleEnded(Entity.State[] snapshots, Entity winner, Entity loser) : base(snapshots) {
-                Winner = winner.EntityState;
-                Loser = loser.EntityState;
-            }
-        }
-
-        public class BEEventHealMoveOccurred : BEvent {
-            public readonly Entity.State HealingPlayer;
-            public readonly Entity.State HealedPlayer;
-            public readonly Move HealingMove;
-            public readonly int DamageDealt;
-
-            public BEEventHealMoveOccurred(Entity.State[] snapshots, Entity healingPlayer, Entity healedPlayer, Move healingMove, int damageDealt) : base(snapshots) {
-                HealingPlayer = healingPlayer.EntityState;
-                HealedPlayer = healedPlayer.EntityState;
-                HealingMove = healingMove;
-                DamageDealt = damageDealt;
-            }
-        }
-
-        public class BEventStackModified : BEvent {
-            public readonly Entity.State Player;
-            public readonly Move Move;
-            public readonly Move.Attribute Attribute;
-            public readonly int Count;
-
-            public BEventStackModified(Entity.State[] snapshots, Entity player, Move move, int count) : base(snapshots) {
-                Player = player.EntityState;
-                Move = move;
-                Attribute = move.Attr;
-                Count = count;
-            }
-        }
-
-        public class BEventBonusDamageOccurred : BEvent {
-            public readonly Entity.State Player;
-            public readonly int DamageDealt;
-
-            public BEventBonusDamageOccurred(Entity.State[] snapshots, Entity player, int damageDealt) : base(snapshots) {
-                Player = player.EntityState;
-                DamageDealt = damageDealt;
-            }
-        }
-
-        public class BEventMoveOccurred : BEvent {
-            public readonly Entity.State AttackingPlayer;
-            public readonly Entity.State DefendingPlayer;
-            public readonly Move AttackingMove;
-            public readonly Move DefendingMove;
-            public readonly int DamageDealt;
-
-            public BEventMoveOccurred(Entity.State[] snapshots, Entity attackingPlayer, Entity defendingPlayer, Move attackingMove, Move defendingMove, int damageDealt) : base(snapshots) {
-                AttackingPlayer = attackingPlayer.EntityState;
-                DefendingPlayer = defendingPlayer.EntityState;
-                AttackingMove = attackingMove;
-                DefendingMove = defendingMove;
-                DamageDealt = damageDealt;
-            }
-        }
-
-        public class BEventMoveChosen : BEvent {
-            public readonly Entity.State Player;
-            public readonly Move Move;
-
-            public BEventMoveChosen(Entity.State[] snapshots, Entity player, Move move) : base(snapshots) {
-                Player = player.EntityState;
-                Move = move;
-            }
-        }
-
-        public class BEventTicksPassed : BEvent {
-            public readonly int Ticks;
-
-            public BEventTicksPassed(Entity.State[] snapshots, int ticks) : base(snapshots) {
-                Ticks = ticks;
-            }
-        }
-
-        public class BEventMoveDelayChanged : BEvent {
-            public readonly Entity.State Player;
-            public readonly int NewCount;
-            public readonly int Delta;
-
-            public BEventMoveDelayChanged(Entity.State[] snapshots, Entity player, int newCount, int delta) : base(snapshots) {
-                Player = player.EntityState;
-                NewCount = newCount;
-                Delta = delta;
-            }
-        }
-
         public Battle(Entity entity1, Entity entity2, IRandom random) : base(new List<Entity>() { entity1, entity2 }, random) {
         }
 
@@ -281,6 +169,118 @@ namespace Combatantelope.WindUp {
 
             _waitingPlayer = movingPlayer;
             SendEvent(new BEventAwaitingMove(States(), movingPlayer.player.GetSnapshot()));
+        }
+
+        public class BEvent : BaseEvent {
+
+            public BEvent(Entity.State[] snapshots) : base(snapshots) { }
+        }
+
+        public class BEventStart : BEvent {
+            public BEventStart(Entity.State[] snapshots) : base(snapshots) {
+            }
+        }
+
+        public class BEventAwaitingMove : BEvent {
+            public readonly Entity.State AwaitingPlayer;
+
+            public BEventAwaitingMove(Entity.State[] snapshots, Entity player) : base(snapshots) {
+                AwaitingPlayer = player.EntityState;
+            }
+        }
+
+        public class BEventBattleEnded : BEvent {
+            public readonly Entity.State Winner;
+            public readonly Entity.State Loser;
+
+            public BEventBattleEnded(Entity.State[] snapshots, Entity winner, Entity loser) : base(snapshots) {
+                Winner = winner.EntityState;
+                Loser = loser.EntityState;
+            }
+        }
+
+        public class BEEventHealMoveOccurred : BEvent {
+            public readonly Entity.State HealingPlayer;
+            public readonly Entity.State HealedPlayer;
+            public readonly Move HealingMove;
+            public readonly int DamageDealt;
+
+            public BEEventHealMoveOccurred(Entity.State[] snapshots, Entity healingPlayer, Entity healedPlayer, Move healingMove, int damageDealt) : base(snapshots) {
+                HealingPlayer = healingPlayer.EntityState;
+                HealedPlayer = healedPlayer.EntityState;
+                HealingMove = healingMove;
+                DamageDealt = damageDealt;
+            }
+        }
+
+        public class BEventStackModified : BEvent {
+            public readonly Entity.State Player;
+            public readonly Move Move;
+            public readonly Move.Attribute Attribute;
+            public readonly int Count;
+
+            public BEventStackModified(Entity.State[] snapshots, Entity player, Move move, int count) : base(snapshots) {
+                Player = player.EntityState;
+                Move = move;
+                Attribute = move.Attr;
+                Count = count;
+            }
+        }
+
+        public class BEventBonusDamageOccurred : BEvent {
+            public readonly Entity.State Player;
+            public readonly int DamageDealt;
+
+            public BEventBonusDamageOccurred(Entity.State[] snapshots, Entity player, int damageDealt) : base(snapshots) {
+                Player = player.EntityState;
+                DamageDealt = damageDealt;
+            }
+        }
+
+        public class BEventMoveOccurred : BEvent {
+            public readonly Entity.State AttackingPlayer;
+            public readonly Entity.State DefendingPlayer;
+            public readonly Move AttackingMove;
+            public readonly Move DefendingMove;
+            public readonly int DamageDealt;
+
+            public BEventMoveOccurred(Entity.State[] snapshots, Entity attackingPlayer, Entity defendingPlayer, Move attackingMove, Move defendingMove, int damageDealt) : base(snapshots) {
+                AttackingPlayer = attackingPlayer.EntityState;
+                DefendingPlayer = defendingPlayer.EntityState;
+                AttackingMove = attackingMove;
+                DefendingMove = defendingMove;
+                DamageDealt = damageDealt;
+            }
+        }
+
+        public class BEventMoveChosen : BEvent {
+            public readonly Entity.State Player;
+            public readonly Move Move;
+
+            public BEventMoveChosen(Entity.State[] snapshots, Entity player, Move move) : base(snapshots) {
+                Player = player.EntityState;
+                Move = move;
+            }
+        }
+
+        public class BEventTicksPassed : BEvent {
+            public readonly int Ticks;
+
+            public BEventTicksPassed(Entity.State[] snapshots, int ticks) : base(snapshots) {
+                Ticks = ticks;
+            }
+        }
+
+        public class BEventMoveDelayChanged : BEvent {
+            public readonly Entity.State Player;
+            public readonly int NewCount;
+            public readonly int Delta;
+
+            public BEventMoveDelayChanged(Entity.State[] snapshots, Entity player, int newCount, int delta) : base(snapshots) {
+                Player = player.EntityState;
+                NewCount = newCount;
+                Delta = delta;
+            }
         }
     }
 }
