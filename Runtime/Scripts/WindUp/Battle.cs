@@ -6,6 +6,8 @@ using UnityEngine;
 
 namespace Combatantelope.WindUp {
     public class Battle : BaseBattle<Battle.BEvent, Entity, Entity.State, Entity.State.Builder> {
+        private Entity _currentEntity;
+        private BattleQueue<Entity> _queue;
 
         public class BEvent : BaseEvent {
 
@@ -20,8 +22,8 @@ namespace Combatantelope.WindUp {
         public class BEventAwaitingMove : BEvent {
             public readonly Entity.State AwaitingPlayer;
 
-            public BEventAwaitingMove(Entity.State[] snapshots, Entity.State player) : base(snapshots) {
-                AwaitingPlayer = player;
+            public BEventAwaitingMove(Entity.State[] snapshots, Entity player) : base(snapshots) {
+                AwaitingPlayer = player.EntityState;
             }
         }
 
@@ -29,9 +31,9 @@ namespace Combatantelope.WindUp {
             public readonly Entity.State Winner;
             public readonly Entity.State Loser;
 
-            public BEventBattleEnded(Entity.State[] snapshots, Entity.State winner, Entity.State loser) : base(snapshots) {
-                Winner = winner;
-                Loser = loser;
+            public BEventBattleEnded(Entity.State[] snapshots, Entity winner, Entity loser) : base(snapshots) {
+                Winner = winner.EntityState;
+                Loser = loser.EntityState;
             }
         }
 
@@ -41,9 +43,9 @@ namespace Combatantelope.WindUp {
             public readonly Move HealingMove;
             public readonly int DamageDealt;
 
-            public BEEventHealMoveOccurred(Entity.State[] snapshots, Entity.State healingPlayer, Entity.State healedPlayer, Move healingMove, int damageDealt) : base(snapshots) {
-                HealingPlayer = healingPlayer;
-                HealedPlayer = healedPlayer;
+            public BEEventHealMoveOccurred(Entity.State[] snapshots, Entity healingPlayer, Entity healedPlayer, Move healingMove, int damageDealt) : base(snapshots) {
+                HealingPlayer = healingPlayer.EntityState;
+                HealedPlayer = healedPlayer.EntityState;
                 HealingMove = healingMove;
                 DamageDealt = damageDealt;
             }
@@ -55,8 +57,8 @@ namespace Combatantelope.WindUp {
             public readonly Move.Attribute Attribute;
             public readonly int Count;
 
-            public BEventStackModified(Entity.State[] snapshots, Entity.State player, Move move, int count) : base(snapshots) {
-                Player = player;
+            public BEventStackModified(Entity.State[] snapshots, Entity player, Move move, int count) : base(snapshots) {
+                Player = player.EntityState;
                 Move = move;
                 Attribute = move.Attr;
                 Count = count;
@@ -67,8 +69,8 @@ namespace Combatantelope.WindUp {
             public readonly Entity.State Player;
             public readonly int DamageDealt;
 
-            public BEventBonusDamageOccurred(Entity.State[] snapshots, Entity.State player, int damageDealt) : base(snapshots) {
-                Player = player;
+            public BEventBonusDamageOccurred(Entity.State[] snapshots, Entity player, int damageDealt) : base(snapshots) {
+                Player = player.EntityState;
                 DamageDealt = damageDealt;
             }
         }
@@ -80,9 +82,9 @@ namespace Combatantelope.WindUp {
             public readonly Move DefendingMove;
             public readonly int DamageDealt;
 
-            public BEventMoveOccurred(Entity.State[] snapshots, Entity.State attackingPlayer, Entity.State defendingPlayer, Move attackingMove, Move defendingMove, int damageDealt) : base(snapshots) {
-                AttackingPlayer = attackingPlayer;
-                DefendingPlayer = defendingPlayer;
+            public BEventMoveOccurred(Entity.State[] snapshots, Entity attackingPlayer, Entity defendingPlayer, Move attackingMove, Move defendingMove, int damageDealt) : base(snapshots) {
+                AttackingPlayer = attackingPlayer.EntityState;
+                DefendingPlayer = defendingPlayer.EntityState;
                 AttackingMove = attackingMove;
                 DefendingMove = defendingMove;
                 DamageDealt = damageDealt;
@@ -93,8 +95,8 @@ namespace Combatantelope.WindUp {
             public readonly Entity.State Player;
             public readonly Move Move;
 
-            public BEventMoveChosen(Entity.State[] snapshots, Entity.State player, Move move) : base(snapshots) {
-                Player = player;
+            public BEventMoveChosen(Entity.State[] snapshots, Entity player, Move move) : base(snapshots) {
+                Player = player.EntityState;
                 Move = move;
             }
         }
@@ -112,16 +114,14 @@ namespace Combatantelope.WindUp {
             public readonly int NewCount;
             public readonly int Delta;
 
-            public BEventMoveDelayChanged(Entity.State[] snapshots, Entity.State player, int newCount, int delta) : base(snapshots) {
-                Player = player;
+            public BEventMoveDelayChanged(Entity.State[] snapshots, Entity player, int newCount, int delta) : base(snapshots) {
+                Player = player.EntityState;
                 NewCount = newCount;
                 Delta = delta;
             }
         }
 
-        List<BEvent> _events = new List<BEvent>();
-
-        public Battle(Entity player, Entity enemy, IRandom random) : base(new List<Entity>() { player, enemy }, random) {
+        public Battle(Entity entity1, Entity entity2, IRandom random) : base(new List<Entity>() { entity1, entity2 }, random) {
         }
 
         public override void StartBattle() {
@@ -129,32 +129,37 @@ namespace Combatantelope.WindUp {
             DoNextTurn();
         }
 
-        public void TriggerLoss(BattlePlayer player) {
+        public void TriggerLoss(Entity.State playerState) {
+            var player = GetPlayer(playerState);
             int dmg = 9999;
             player.TakeDamage(dmg);
-            SendEvent(new BEventBonusDamageOccurred(States(), player.GetSnapshot(), dmg));
+            SendEvent(new BEventBonusDamageOccurred(States(), player, dmg));
             SendBattleEnded(Other(player));
         }
 
-        private BattlePlayer Other(BattlePlayer player) {
-            if (_playerStates.Length < 2) return null;
-            PlayerState other = _playerStates[0].player != player ? _playerStates[0] : _playerStates[1];
-            return other.player;
+        private Entity Other(Entity.State entity) {
+            var player = GetPlayer(entity);
+            return Other(player);
         }
 
-        private void SendBattleEnded(BattlePlayer winner) {
-            SendEvent(new BEventBattleEnded(States(), winner.GetSnapshot(), Other(winner).GetSnapshot()));
+        private Entity Other(Entity entity) {
+            if (_entities.Count < 2) return null;
+            return _entities[0] != entity ? _entities[0] : _entities[1];
         }
 
-        public void ScheduleMove(BattlePlayer player, Move move) {
-            if (player != _waitingPlayer.player) {
+        private void SendBattleEnded(Entity winner) {
+            SendEvent(new BEventBattleEnded(States(), winner, Other(winner)));
+        }
+
+        public void ScheduleMove(Entity.State playerState, Move move) {
+            var player = GetPlayer(playerState);
+            if (player != _currentEntity) {
                 Debug.LogWarning("Got new move from non-awaiting player. Ignoring.");
                 return;
             }
 
-            _waitingPlayer.activeMove = move;
-            _waitingPlayer.delayRemaining = Mathf.Max(1, move.Delay);
-            SendEvent(new BEventMoveChosen(States(), player.GetSnapshot(), move));
+            _currentEntity.SetActiveMove(move);
+            SendEvent(new BEventMoveChosen(States(), player, move));
 
             Debug.Log($"{player} chose {move}.");
 
@@ -162,32 +167,32 @@ namespace Combatantelope.WindUp {
         }
 
         void PrintStates() {
-            for (int i = 0; i < _playerStates.Length; i++) {
-                Debug.Log($"{_playerStates[i]}");
+            for (int i = 0; i < _entities.Count; i++) {
+                Debug.Log($"{_entities[i]}");
             }
         }
 
         public static int ComputeDamage(Move attack, Move defense) {
             if (attack.Attr == Move.Attribute.Heal) return 0;
-            if (defense == null) return attack.Attack;
+            if (defense == null) return attack.MoveBattleStats.Effect;
             return attack.Attr == Move.Attribute.Piercing
-                ? attack.Attack : Mathf.Max(0, attack.Attack - defense.Defense);
+                ? attack.MoveBattleStats.Effect : Mathf.Max(0, attack.MoveBattleStats.Effect - defense.MoveBattleStats.Defense);
         }
 
         public static int ComputeReflect(Move attack, Move defense) {
             if (defense == null || defense.Attr != Move.Attribute.Reflect) return 0;
             if (attack.Attr == Move.Attribute.Piercing) return 0;
-            return Mathf.Min(attack.Attack, defense.Defense);
+            return Mathf.Min(attack.MoveBattleStats.Effect, defense.MoveBattleStats.Defense);
         }
 
         public static bool WillHitBeforeMoveChange(Move attack, Entity.State player) {
-            return (player.Player.FirstToAct && attack.Delay < player.DelayRemaining)
-                || attack.Delay <= player.DelayRemaining;
+            return (player.FirstToAct && attack.MoveBattleStats.Delay < player.DelayRemaining)
+                || attack.MoveBattleStats.Delay <= player.DelayRemaining;
         }
 
         void DoNextTurn() {
-            _waitingPlayer = null;
-
+            _currentEntity = null;
+            _que
             int nextDelay = _playerStates.Select(x => x.delayRemaining).Min();
 
             PlayerState movingPlayer = null;
