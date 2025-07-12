@@ -95,7 +95,7 @@ namespace Combatantelope.WindUp {
             int nextDelay = _currentEntity.EntityState.DelayRemaining;
 
             foreach (var entity in _entities) {
-                entity.Tick(nextDelay);
+                entity.TimePassed(nextDelay);
             }
             SendEvent(new BEventTicksPassed(States(), nextDelay));
 
@@ -118,60 +118,57 @@ namespace Combatantelope.WindUp {
 
                     if (dmg > 0 && move.AppliesStacks) {
                         //Debug.Log($"{movingPlayer.player} used {move} and it applied {move.StacksToApply} stacks of {move.Attr}");
-                        int count = otherPlayer.player.TopUpStacks(move);
-                        SendEvent(new BEventStackModified(States(), otherPlayer.player.GetSnapshot(), move, count));
+                        int count = otherPlayer.TopUpStacks(move);
+                        SendEvent(new BEventStackModified(States(), otherPlayer, move, count));
                     }
 
-                    Debug.Log($"{movingPlayer.player} used {movingPlayer.activeMove} on {otherPlayer.player}, dealing {dmg} damage.");
-                    otherPlayer.player.TakeDamage(dmg);
-                    SendEvent(new BEventMoveOccurred(States(), movingPlayer.player.GetSnapshot(), otherPlayer.player.GetSnapshot(), movingPlayer.activeMove, otherPlayer.activeMove, dmg));
+                    otherPlayer.TakeDamage(dmg);
+                    SendEvent(new BEventMoveOccurred(States(), movingPlayer, otherPlayer, movingPlayer.EntityState.ActiveMove, otherPlayer.EntityState.ActiveMove, dmg));
 
                     if (move.Attr == Move.Attribute.Stun) {
-                        otherPlayer.delayRemaining += move.AttrEffect;
-                        SendEvent(new BEventMoveDelayChanged(States(), otherPlayer.player.GetSnapshot(), otherPlayer.delayRemaining, move.AttrEffect));
+                        otherPlayer.AddTicks(move.AttrEffect);
+                        SendEvent(new BEventMoveDelayChanged(States(), otherPlayer, otherPlayer.EntityState.DelayRemaining, move.AttrEffect));
                     }
 
-                    if (otherPlayer.activeMove.Attr == Move.Attribute.Reflect) {
-                        int deflected = move.Attack - dmg;
+                    if (otherPlayer.EntityState.ActiveMove.Attr == Move.Attribute.Reflect) {
+                        int deflected = move.MoveBattleStats.Effect - dmg;
                         if (deflected > 0) {
                             int deflectDmg = deflected;
-                            movingPlayer.player.TakeDamage(deflectDmg);
-                            SendEvent(new BEventBonusDamageOccurred(States(), movingPlayer.player.GetSnapshot(), deflectDmg));
+                            movingPlayer.TakeDamage(deflectDmg);
+                            SendEvent(new BEventBonusDamageOccurred(States(), movingPlayer, deflectDmg));
                         }
                     }
 
                     if (move.Attr == Move.Attribute.Vampiric && dmg > 0) {
                         int steal = dmg / 2;
-                        Debug.Log($"{movingPlayer.player} stole {steal} health!");
-                        movingPlayer.player.Heal(steal);
-                        Entity.State playerSnap = movingPlayer.player.GetSnapshot();
-                        SendEvent(new BEEventHealMoveOccurred(States(), playerSnap, playerSnap, movingPlayer.activeMove, -steal));
+                        //Debug.Log($"{movingPlayer.player} stole {steal} health!");
+                        movingPlayer.Heal(steal);
+                        SendEvent(new BEEventHealMoveOccurred(States(), movingPlayer, movingPlayer, move, -steal));
                     }
                 }
 
-                if (otherPlayer.player.Dead()) {
-                    SendBattleEnded(movingPlayer.player);
+                if (otherPlayer.EntityState.Dead()) {
+                    SendBattleEnded(movingPlayer);
                     return;
                 }
 
-                if (movingPlayer.player.TryGetStack(Move.Attribute.Bleed, out BattlePlayer.Stack stack)) {
+                if (movingPlayer.EntityState.TryGetStack(Move.Attribute.Bleed, out var stack)) {
                     int newCount = stack.Count - 1;
-                    movingPlayer.player.RemoveStack(stack.AppliedMove);
-                    SendEvent(new BEventStackModified(States(), movingPlayer.player.GetSnapshot(), stack.AppliedMove, newCount));
+                    movingPlayer.RemoveStack(stack.AppliedMove);
+                    SendEvent(new BEventStackModified(States(), movingPlayer, stack.AppliedMove, newCount));
                     int dmg = stack.AppliedMove.DamageOnApply;
-                    movingPlayer.player.TakeDamage(dmg);
-                    SendEvent(new BEventBonusDamageOccurred(States(), movingPlayer.player.GetSnapshot(), dmg));
+                    movingPlayer.TakeDamage(dmg);
+                    SendEvent(new BEventBonusDamageOccurred(States(), movingPlayer, dmg));
                 }
 
-                if (movingPlayer.player.Dead()) {
-                    SendBattleEnded(otherPlayer.player);
+                if (movingPlayer.EntityState.Dead()) {
+                    SendBattleEnded(otherPlayer);
                     return;
                 }
             }
             PrintStates();
 
-            _waitingPlayer = movingPlayer;
-            SendEvent(new BEventAwaitingMove(States(), movingPlayer.player.GetSnapshot()));
+            SendEvent(new BEventAwaitingMove(States(), _currentEntity));
         }
 
         public class BEvent : BaseEvent {
