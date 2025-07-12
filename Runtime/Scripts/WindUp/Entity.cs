@@ -1,3 +1,5 @@
+using Codice.Utils;
+using Combatantelope.Kerfuffle;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -23,6 +25,12 @@ namespace Combatantelope.WindUp {
 
         public void TakeDamage(int damage) {
             EntityState = EntityState.ToBuilder().TakeDamage(damage).Build();
+        }
+
+        public int Heal(int amt) {
+            int realAmt = (int)Mathf.Min(EntityState.Attributes.MaxHP - EntityState.HP, amt);
+            EntityState = EntityState.ToBuilder().SetHP(EntityState.HP + realAmt).Build();
+            return realAmt;
         }
 
         public void SetActiveMove(Move move) {

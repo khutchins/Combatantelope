@@ -108,18 +108,16 @@ namespace Combatantelope.WindUp {
 
             if (_currentEntity.EntityState.ActiveMove != null) {
                 var movingPlayer = _currentEntity;
-                Move move = _currentEntity.EntityState.ActiveMove;
+                Move move = movingPlayer.EntityState.ActiveMove;
 
                 if (move.Attr == Move.Attribute.Heal) {
-                    Debug.Log($"{movingPlayer.player} used {move} and healed for {move.Attack}");
-                    movingPlayer.player.Heal(move.Attack);
-                    Entity.State playerSnap = movingPlayer.player.GetSnapshot();
-                    SendEvent(new BEEventHealMoveOccurred(States(), playerSnap, playerSnap, movingPlayer.activeMove, -move.Attack));
+                    var amt = movingPlayer.Heal(move.MoveBattleStats.Effect);
+                    SendEvent(new BEEventHealMoveOccurred(States(), movingPlayer, movingPlayer, move, amt));
                 } else {
-                    int dmg = ComputeDamage(move, otherPlayer.activeMove);
+                    int dmg = ComputeDamage(move, otherPlayer.EntityState.ActiveMove);
 
                     if (dmg > 0 && move.AppliesStacks) {
-                        Debug.Log($"{movingPlayer.player} used {move} and it applied {move.StacksToApply} stacks of {move.Attr}");
+                        //Debug.Log($"{movingPlayer.player} used {move} and it applied {move.StacksToApply} stacks of {move.Attr}");
                         int count = otherPlayer.player.TopUpStacks(move);
                         SendEvent(new BEventStackModified(States(), otherPlayer.player.GetSnapshot(), move, count));
                     }
@@ -210,11 +208,11 @@ namespace Combatantelope.WindUp {
             public readonly Move HealingMove;
             public readonly int DamageDealt;
 
-            public BEEventHealMoveOccurred(Entity.State[] snapshots, Entity healingPlayer, Entity healedPlayer, Move healingMove, int damageDealt) : base(snapshots) {
+            public BEEventHealMoveOccurred(Entity.State[] snapshots, Entity healingPlayer, Entity healedPlayer, Move healingMove, int healAmt) : base(snapshots) {
                 HealingPlayer = healingPlayer.EntityState;
                 HealedPlayer = healedPlayer.EntityState;
                 HealingMove = healingMove;
-                DamageDealt = damageDealt;
+                DamageDealt = healAmt;
             }
         }
 
