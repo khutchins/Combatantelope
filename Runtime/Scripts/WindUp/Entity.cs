@@ -55,7 +55,7 @@ namespace Combatantelope.WindUp {
             }
 
             public static State FromAttrs(EntityAttributes attrs) {
-                return new State(0, attrs.MaxHP, 0, attrs, 0, 0, false);
+                return new State(0, attrs.MaxHP, 0, attrs, null, 0, false);
             }
 
             public override Builder ToBuilder() {

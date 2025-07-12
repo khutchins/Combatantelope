@@ -8,11 +8,23 @@ namespace Combatantelope.WindUp {
     public class Battle : BaseBattle<Battle.BEvent, Entity, Entity.State, Entity.State.Builder> {
         private Entity _currentEntity;
         private BattleQueue<Entity> _queue;
+        private State _battleState = State.WaitingForStart;
+
+        enum State {
+            WaitingForStart,
+            WaitingForMove,
+            BattleOver
+        }
 
         public Battle(Entity entity1, Entity entity2, IRandom random) : base(new List<Entity>() { entity1, entity2 }, random) {
+            _queue = new BattleQueue<Entity>(_entities, QueuePriority.Low);
         }
 
         public override void StartBattle() {
+            if (_battleState != State.WaitingForStart) {
+                Debug.LogWarning("Attempting to start started battle!");
+                return;
+            }
             SendEvent(new BEventStart(States()));
             DoNextTurn();
         }
@@ -79,31 +91,24 @@ namespace Combatantelope.WindUp {
         }
 
         void DoNextTurn() {
-            _currentEntity = null;
-            _que
-            int nextDelay = _playerStates.Select(x => x.delayRemaining).Min();
+            _currentEntity = _queue.NextEntity();
+            int nextDelay = _currentEntity.EntityState.DelayRemaining;
 
-            PlayerState movingPlayer = null;
-            foreach (PlayerState state in _playerStates) {
-                state.delayRemaining -= nextDelay;
-                if (movingPlayer == null && state.delayRemaining == 0) {
-                    movingPlayer = state;
-                }
+            foreach (var entity in _entities) {
+                entity.Tick(nextDelay);
             }
             SendEvent(new BEventTicksPassed(States(), nextDelay));
 
-            if (movingPlayer == null) {
+            if (_currentEntity == null) {
                 Debug.LogError("No player hit delay zero. This is going to be a bug.");
                 return;
             }
 
-            Debug.Log("Waiting for next turn.");
+            var otherPlayer = Other(_currentEntity);
 
-            PlayerState otherPlayer = _playerStates.Where(x => x != movingPlayer).FirstOrDefault();
-
-            if (movingPlayer.activeMove != null) {
-
-                Move move = movingPlayer.activeMove;
+            if (_currentEntity.EntityState.ActiveMove != null) {
+                var movingPlayer = _currentEntity;
+                Move move = _currentEntity.EntityState.ActiveMove;
 
                 if (move.Attr == Move.Attribute.Heal) {
                     Debug.Log($"{movingPlayer.player} used {move} and healed for {move.Attack}");
