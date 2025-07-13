@@ -48,6 +48,10 @@ namespace Combatantelope.WindUp {
             EntityState = EntityState.ToBuilder().TimePassed(time).Build();
         }
 
+        public void SetFirstToAct() {
+            EntityState = EntityState.ToBuilder().SetFirstToAct(true).Build();
+        }
+
         public int TopUpStacks(Move move) {
             EntityState = EntityState.ToBuilder().TopUpStacks(move).Build();
             var stk = EntityState.Stacks.FirstOrDefault(x => x.AppliedMove == move);

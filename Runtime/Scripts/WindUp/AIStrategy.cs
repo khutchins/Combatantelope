@@ -2,7 +2,7 @@ using System.Linq;
 
 namespace Combatantelope.WindUp {
     public class AIStrategy : IActionHandler {
-        private int _lastMove = -1;
+        private int _lastMove = 0;
         private BattleStrategy _strategy;
 
         public AIStrategy(BattleStrategy battleStrategy) {
@@ -10,7 +10,7 @@ namespace Combatantelope.WindUp {
         }
 
         public void Reset() {
-            _lastMove = -1;
+            _lastMove = 0;
         }
 
         public Move ChooseMove(Battle battle, Battle.EventTurn tevent) {

@@ -18,6 +18,9 @@ namespace Combatantelope.WindUp {
 
         public Battle(Entity entity1, Entity entity2, IRandom random = null) : base(new List<Entity>() { entity1, entity2 }, random) {
             _queue = new BattleQueue<Entity>(_entities, QueuePriority.Low);
+            if (!entity1.EntityState.FirstToAct && !entity2.EntityState.FirstToAct) {
+                entity1.SetFirstToAct();
+            }
         }
 
         public override void StartBattle() {
