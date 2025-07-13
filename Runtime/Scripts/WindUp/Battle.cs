@@ -73,15 +73,15 @@ namespace Combatantelope.WindUp {
         }
 
         public static int ComputeDamage(Move attack, Move defense) {
-            if (attack.Attr == Move.Attribute.Heal) return 0;
+            if (attack.Attr.Attribute == Move.Attribute.Heal) return 0;
             if (defense == null) return attack.MoveBattleStats.Effect;
-            return attack.Attr == Move.Attribute.Piercing
+            return attack.Attr.Attribute == Move.Attribute.Piercing
                 ? attack.MoveBattleStats.Effect : Mathf.Max(0, attack.MoveBattleStats.Effect - defense.MoveBattleStats.Defense);
         }
 
         public static int ComputeReflect(Move attack, Move defense) {
-            if (defense == null || defense.Attr != Move.Attribute.Reflect) return 0;
-            if (attack.Attr == Move.Attribute.Piercing) return 0;
+            if (defense == null || defense.Attr.Attribute != Move.Attribute.Reflect) return 0;
+            if (attack.Attr.Attribute == Move.Attribute.Piercing) return 0;
             return Mathf.Min(attack.MoveBattleStats.Effect, defense.MoveBattleStats.Defense);
         }
 
@@ -110,7 +110,7 @@ namespace Combatantelope.WindUp {
                 var movingPlayer = _currentEntity;
                 Move move = movingPlayer.EntityState.ActiveMove;
 
-                if (move.Attr == Move.Attribute.Heal) {
+                if (move.Attr.Attribute == Move.Attribute.Heal) {
                     var amt = movingPlayer.Heal(move.MoveBattleStats.Effect);
                     SendEvent(new BEEventHealMoveOccurred(States(), movingPlayer, movingPlayer, move, amt));
                 } else {
@@ -125,12 +125,12 @@ namespace Combatantelope.WindUp {
                     otherPlayer.TakeDamage(dmg);
                     SendEvent(new BEventMoveOccurred(States(), movingPlayer, otherPlayer, movingPlayer.EntityState.ActiveMove, otherPlayer.EntityState.ActiveMove, dmg));
 
-                    if (move.Attr == Move.Attribute.Stun) {
-                        otherPlayer.AddTicks(move.AttrEffect);
-                        SendEvent(new BEventMoveDelayChanged(States(), otherPlayer, otherPlayer.EntityState.DelayRemaining, move.AttrEffect));
+                    if (move.Attr.Attribute == Move.Attribute.Stun && move.Attr is EffectAttr eat) {
+                        otherPlayer.AddTicks(eat.Effect);
+                        SendEvent(new BEventMoveDelayChanged(States(), otherPlayer, otherPlayer.EntityState.DelayRemaining, eat.Effect));
                     }
 
-                    if (otherPlayer.EntityState.ActiveMove.Attr == Move.Attribute.Reflect) {
+                    if (otherPlayer.EntityState.ActiveMove.Attr.Attribute == Move.Attribute.Reflect) {
                         int deflected = move.MoveBattleStats.Effect - dmg;
                         if (deflected > 0) {
                             int deflectDmg = deflected;
@@ -139,7 +139,7 @@ namespace Combatantelope.WindUp {
                         }
                     }
 
-                    if (move.Attr == Move.Attribute.Vampiric && dmg > 0) {
+                    if (move.Attr.Attribute == Move.Attribute.Vampiric && dmg > 0) {
                         int steal = dmg / 2;
                         //Debug.Log($"{movingPlayer.player} stole {steal} health!");
                         movingPlayer.Heal(steal);
@@ -156,7 +156,7 @@ namespace Combatantelope.WindUp {
                     int newCount = stack.Count - 1;
                     movingPlayer.RemoveStack(stack.AppliedMove);
                     SendEvent(new BEventStackModified(States(), movingPlayer, stack.AppliedMove, newCount));
-                    int dmg = stack.AppliedMove.DamageOnApply;
+                    int dmg = (stack.AppliedMove.Attr as StackAttr).DamageOnApply;
                     movingPlayer.TakeDamage(dmg);
                     SendEvent(new BEventBonusDamageOccurred(States(), movingPlayer, dmg));
                 }
@@ -222,7 +222,7 @@ namespace Combatantelope.WindUp {
             public BEventStackModified(Entity.State[] snapshots, Entity player, Move move, int count) : base(snapshots) {
                 Player = player.EntityState;
                 Move = move;
-                Attribute = move.Attr;
+                Attribute = move.Attr.Attribute;
                 Count = count;
             }
         }

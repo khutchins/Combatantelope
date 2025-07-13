@@ -73,7 +73,8 @@ namespace Combatantelope.WindUp {
             }
 
             public Stack TopUp(Move move) {
-                return new Stack(move, System.Math.Max(move.StacksToApply, Count));
+                int stacks = move.Attr is StackAttr stat ? stat.StacksToApply : 0;
+                return new Stack(move, System.Math.Max(stacks, Count));
             }
 
             public Stack Decrease() {
@@ -113,7 +114,7 @@ namespace Combatantelope.WindUp {
             }
 
             public bool TryGetStack(Move.Attribute attr, out Stack stack) {
-                stack = Stacks.FirstOrDefault(x => x.AppliedMove.Attr == attr);
+                stack = Stacks.FirstOrDefault(x => x.AppliedMove.Attr.Attribute == attr);
                 return stack != null;
             }
 
@@ -184,7 +185,8 @@ namespace Combatantelope.WindUp {
                 public Builder TopUpStacks(Move appliedMove) {
                     int idx = _stacks.FindIndex(x => x.AppliedMove == appliedMove);
                     if (idx < 0) {
-                        _stacks.Add(new Stack(appliedMove, appliedMove.StacksToApply));
+                        int stacks = appliedMove.Attr is StackAttr stat ? stat.StacksToApply : 0;
+                        _stacks.Add(new Stack(appliedMove, stacks));
                     } else {
                         Stack stk = _stacks[idx];
                         Stack newStk = stk.TopUp(appliedMove);
