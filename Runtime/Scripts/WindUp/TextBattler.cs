@@ -47,50 +47,51 @@ namespace Combatantelope.WindUp {
 
                 switch (evnt) {
                     case Battle.BEventStart bstart:
-                        _handler.Log($"Starting battle between {Name(bstart.Snapshots[0])} and {Name(bstart.Snapshots[1])}. {Name(bstart.Snapshots[0])} acts first!");
+                        _handler.Log($"Starting battle between {Colorize(Name(bstart.Snapshots[0]), NameColor)} and {Colorize(Name(bstart.Snapshots[1]), NameColor)}. {Colorize(Name(bstart.Snapshots[0]), NameColor)} acts first!");
                         break;
                     case Battle.EventTurn turnEvent:
                         var awaitingPlayer = turnEvent.AwaitingPlayer;
-                        _handler.Log($"{Name(awaitingPlayer)}'s turn. (HP: {awaitingPlayer.HP}, Def: {awaitingPlayer.Defense})");
+                        _handler.Log($"{Colorize(Name(awaitingPlayer), NameColor)}'s turn. (HP: {Colorize(awaitingPlayer.HP.ToString(), NumberColor)}, Def: {Colorize(awaitingPlayer.Defense.ToString(), NumberColor)})");
                         var otherPlayer = turnEvent.Snapshots.FirstOrDefault(x => x.ID != awaitingPlayer.ID);
                         if (otherPlayer.ActiveMove != null) {
-                            _handler.Log($"{Name(otherPlayer)} has {otherPlayer.ActiveMove} readied. {otherPlayer.DelayRemaining} ticks before attack.");
+                            _handler.Log($"{Colorize(Name(otherPlayer), NameColor)} has {Colorize(otherPlayer.ActiveMove.Name, MoveColor)} readied. {Colorize(otherPlayer.DelayRemaining.ToString(), TickColor)} ticks before attack.");
                         } else {
-                            _handler.Log($"{Name(otherPlayer)} has no move readied.");
+                            _handler.Log($"{Colorize(Name(otherPlayer), NameColor)} has no move readied.");
                         }
                         yield return WaitForAction(battle, turnEvent);
                         break;
                     case Battle.BEventMoveChosen chosenEvent:
-                        _handler.Log($"{Name(chosenEvent.Player)} prepares {chosenEvent.Move.MoveText(false)}.");
+                        _handler.Log($"{Colorize(Name(chosenEvent.Player), NameColor)} prepares {Colorize(chosenEvent.Move.MoveText(false), MoveColor)}.");
                         break;
                     case Battle.BEventTicksPassed ticksEvent:
-                        _handler.Log($"{ticksEvent.Ticks} ticks pass.");
+                        if (ticksEvent.Ticks > 0) {
+                            _handler.Log($"{Colorize(ticksEvent.Ticks.ToString(), TickColor)} ticks pass.");
+                        }
                         break;
                     case Battle.BEventMoveOccurred moveEvent:
-                        string defenseText = moveEvent.DefendingMove != null ? $"against {moveEvent.DefendingMove.Name}" : "against an open target";
-
-                        _handler.Log($"{Name(moveEvent.AttackingPlayer)} uses {moveEvent.AttackingMove.Name} {defenseText}, dealing {moveEvent.DamageDealt} damage. {Name(moveEvent.DefendingPlayer)} has {moveEvent.DefendingPlayer.HP}/{moveEvent.DefendingPlayer.Attributes.MaxHP} HP.");
+                        string defenseText = moveEvent.DefendingMove != null ? $"against {Colorize(moveEvent.DefendingMove.Name, MoveColor)}" : "against an open target";
+                        _handler.Log($"{Colorize(Name(moveEvent.AttackingPlayer), NameColor)} uses {Colorize(moveEvent.AttackingMove.Name, MoveColor)} {defenseText}, dealing {Colorize(moveEvent.DamageDealt.ToString(), DamageColor)} damage. {Colorize(Name(moveEvent.DefendingPlayer), NameColor)} has {Colorize(moveEvent.DefendingPlayer.HP.ToString(), NumberColor)}/{Colorize(moveEvent.DefendingPlayer.Attributes.MaxHP.ToString(), NumberColor)} HP.");
                         break;
                     case Battle.BEEventHealMoveOccurred healEvent:
                         if (healEvent.DamageDealt < 0) {
-                            _handler.Log($"{Name(healEvent.HealingPlayer)} uses {healEvent.HealingMove.Name}, healing for {healEvent.DamageDealt} HP. {Name(healEvent.HealedPlayer)} is now at {healEvent.HealedPlayer.HP}/{healEvent.HealedPlayer.Attributes.MaxHP} HP.");
+                            _handler.Log($"{Colorize(Name(healEvent.HealingPlayer), NameColor)} uses {Colorize(healEvent.HealingMove.Name, MoveColor)}, healing for {Colorize(Mathf.Abs(healEvent.DamageDealt).ToString(), HealColor)} HP. {Colorize(Name(healEvent.HealedPlayer), NameColor)} is now at {Colorize(healEvent.HealedPlayer.HP.ToString(), NumberColor)}/{Colorize(healEvent.HealedPlayer.Attributes.MaxHP.ToString(), NumberColor)} HP.");
                         }
                         break;
                     case Battle.BEventBonusDamageOccurred bonusDmgEvent:
-                        _handler.Log($"{Name(bonusDmgEvent.Player)} takes {bonusDmgEvent.DamageDealt} bonus damage, leaving them with {bonusDmgEvent.Player.HP}/{bonusDmgEvent.Player.Attributes.MaxHP} HP.");
+                        _handler.Log($"{Colorize(Name(bonusDmgEvent.Player), NameColor)} takes {Colorize(bonusDmgEvent.DamageDealt.ToString(), DamageColor)} bonus damage, leaving them with {Colorize(bonusDmgEvent.Player.HP.ToString(), NumberColor)}/{Colorize(bonusDmgEvent.Player.Attributes.MaxHP.ToString(), NumberColor)} HP.");
                         break;
                     case Battle.BEventStackModified stackEvent:
                         if (stackEvent.Count > 0) {
-                            _handler.Log($"{Name(stackEvent.Player)} now has {stackEvent.Count} stacks of {stackEvent.Attribute}.");
+                            _handler.Log($"{Colorize(Name(stackEvent.Player), NameColor)} now has {Colorize(stackEvent.Count.ToString(), NumberColor)} stacks of {Colorize(stackEvent.Attribute.ToString(), AttributeColor)}.");
                         } else {
-                            _handler.Log($"{stackEvent.Attribute} wears off for {Name(stackEvent.Player)}.");
+                            _handler.Log($"{Colorize(stackEvent.Attribute.ToString(), AttributeColor)} wears off for {Colorize(Name(stackEvent.Player), NameColor)}.");
                         }
                         break;
                     case Battle.BEventMoveDelayChanged delayEvent:
-                        _handler.Log($"{Name(delayEvent.Player)}'s next action is delayed by {delayEvent.Delta} ticks.");
+                        _handler.Log($"{Colorize(Name(delayEvent.Player), NameColor)}'s next action is delayed by {Colorize(delayEvent.Delta.ToString(), TickColor)} ticks.");
                         break;
                     case Battle.BEventBattleEnded endEvent:
-                        _handler.Log($"The battle is over! {Name(endEvent.Winner)} is victorious over {Name(endEvent.Loser)}.");
+                        _handler.Log($"The battle is over! {Colorize(Name(endEvent.Winner), NameColor)} is victorious over {Colorize(Name(endEvent.Loser), DamageColor)}.");
                         break;
                     default:
                         _handler.Log($"Unrecognized event {evnt.GetType()}");
@@ -101,10 +102,10 @@ namespace Combatantelope.WindUp {
 
         void PrintMoves(Entity.State entity, Move[] moves) {
             List<string> moveInput = new List<string>() {
-                $"Choose move for {entity.Attributes.Name}:"
+                $"Choose move for {Colorize(entity.Attributes.Name, NameColor)}:"
             };
             for (int i = 0; i < moves.Length; i++) {
-                moveInput.Add($"{i + 1}. {moves[i]}");
+                moveInput.Add($"{Colorize((i + 1).ToString(), NumberColor)}. {moves[i]}");
             }
             _handler.InputRequest(moveInput.ToArray());
         }
@@ -166,6 +167,18 @@ namespace Combatantelope.WindUp {
 
         public void EventHappened(List<Battle.BEvent> allevents, Battle.BEvent thisEvent) {
             _unprocessedEvents.Add(thisEvent);
+        }
+
+
+        private const string NameColor = "red";
+        private const string NumberColor = "yellow";
+        private const string MoveColor = "#00ffff";
+        private const string DamageColor = "red";
+        private const string HealColor = "green";
+        private const string AttributeColor = "#ff00ff";
+        private const string TickColor = "yellow";
+        private string Colorize(string text, string color) {
+            return $"<color={color}>{text}</color>";
         }
     }
 
