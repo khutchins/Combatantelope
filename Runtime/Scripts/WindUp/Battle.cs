@@ -16,7 +16,7 @@ namespace Combatantelope.WindUp {
             BattleOver
         }
 
-        public Battle(Entity entity1, Entity entity2, IRandom random) : base(new List<Entity>() { entity1, entity2 }, random) {
+        public Battle(Entity entity1, Entity entity2, IRandom random = null) : base(new List<Entity>() { entity1, entity2 }, random) {
             _queue = new BattleQueue<Entity>(_entities, QueuePriority.Low);
         }
 
@@ -168,7 +168,7 @@ namespace Combatantelope.WindUp {
             }
             PrintStates();
 
-            SendEvent(new BEventAwaitingMove(States(), _currentEntity));
+            SendEvent(new EventTurn(States(), _currentEntity));
         }
 
         public class BEvent : BaseEvent {
@@ -181,10 +181,10 @@ namespace Combatantelope.WindUp {
             }
         }
 
-        public class BEventAwaitingMove : BEvent {
+        public class EventTurn : BEvent {
             public readonly Entity.State AwaitingPlayer;
 
-            public BEventAwaitingMove(Entity.State[] snapshots, Entity player) : base(snapshots) {
+            public EventTurn(Entity.State[] snapshots, Entity player) : base(snapshots) {
                 AwaitingPlayer = player.EntityState;
             }
         }
