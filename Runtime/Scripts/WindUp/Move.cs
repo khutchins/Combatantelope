@@ -60,7 +60,8 @@ namespace Combatantelope.WindUp {
             get => Attr is TickStackAttr;
         }
 
-        private string EffectName() {
+        public string EffectName() {
+            if (Attr == null) return "";
             return Attr.Attribute switch {
                 Attribute.None => "",
                 Attribute.Piercing => "Pi",
@@ -70,6 +71,21 @@ namespace Combatantelope.WindUp {
                 Attribute.Vampiric => "Va",
                 Attribute.Reflect => "Rf",
                 Attribute.Stun => "St",
+                _ => ""
+            };
+        }
+
+        public string EffectLongName() {
+            if (Attr == null) return "";
+            return Attr.Attribute switch {
+                Attribute.None => "",
+                Attribute.Piercing => "Piercing",
+                Attribute.Heal => "Heal",
+                Attribute.Bleed => "Bleed",
+                Attribute.Poison => "Poison",
+                Attribute.Vampiric => "Vampiric",
+                Attribute.Reflect => "Reflect",
+                Attribute.Stun => "Stun",
                 _ => ""
             };
         }
