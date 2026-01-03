@@ -199,7 +199,7 @@ namespace Combatantelope.Kerfuffle {
 
     public class AIActionHandler : IActionHandler {
         public Move ChooseMove(Battle battle, Battle.EventTurn tevent) {
-            return new SystemRandom().FromList(tevent.ActivePlayer.ValidMoves);
+            return new SystemRandom().From(tevent.ActivePlayer.ValidMoves);
         }
 
         public bool ChooseParry(Battle battle, Battle.EventParryOpportunity pevent) {
